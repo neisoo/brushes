@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.apps.brushes;
-
-import java.util.ArrayList;
+package com.gsl.smartpenbrushes;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
@@ -42,12 +40,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import org.rf.apps.brushes.R;
+import com.gsl.smartpenbrushes.R;
 
 public class Slate extends View {
 
-    static final boolean DEBUG = false;
-    static final String TAG = "Slate";
+    public static final boolean DEBUG = false;
+    public static final String TAG = "Slate";
     
     public static final boolean HWLAYER = true;
     public static final boolean SWLAYER = false;
@@ -105,7 +103,7 @@ public class Slate extends View {
     
     private boolean mEmpty;
     
-    private Region mDirtyRegion = new Region();
+    private Path mDirtyPath = new Path();
 
     public interface SlateListener {
         void strokeStarted();
@@ -709,9 +707,9 @@ public class Slate extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (mTiledCanvas != null) {
-            if (!mDirtyRegion.isEmpty()) {
-                canvas.clipRegion(mDirtyRegion);
-                mDirtyRegion.setEmpty();
+            if (!mDirtyPath.isEmpty()) {
+                canvas.clipPath(mDirtyPath);
+                mDirtyPath.reset();
             }
             mTiledCanvas.drawTo(canvas, 0, 0, null, false); // @@ set to true for dirty tile updates
             if (0 != (mDebugFlags & FLAG_DEBUG_STROKES)) {
@@ -865,7 +863,7 @@ public class Slate extends View {
         if (INVALIDATE_ALL_THE_THINGS) {
             invalidate();
         } else if (FANCY_INVALIDATES) {
-            mDirtyRegion.union(tmpDirtyRect);
+            mDirtyPath.addRect(new RectF(tmpDirtyRect), Path.Direction.CCW);
             invalidate(); // enqueue invalidation
         } else {
             invalidate(tmpDirtyRect);

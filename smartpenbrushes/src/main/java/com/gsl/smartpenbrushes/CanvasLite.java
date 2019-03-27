@@ -1,4 +1,4 @@
-package com.google.android.apps.brushes;
+package com.gsl.smartpenbrushes;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

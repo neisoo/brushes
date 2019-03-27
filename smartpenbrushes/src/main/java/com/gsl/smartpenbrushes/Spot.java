@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.apps.brushes;
+package com.gsl.smartpenbrushes;
 
 import android.os.SystemClock;
 import android.view.MotionEvent;

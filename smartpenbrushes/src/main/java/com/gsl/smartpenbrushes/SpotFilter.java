@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.google.android.apps.brushes;
+package com.gsl.smartpenbrushes;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import android.view.MotionEvent;

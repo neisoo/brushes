@@ -1,13 +1,12 @@
 apply plugin: 'com.android.application'
-
 android {
-    compileSdkVersion 17
+    compileSdkVersion 26
     buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "org.rf.apps.brushes"
-        minSdkVersion 5
-        targetSdkVersion 14
+        minSdkVersion 23
+        targetSdkVersion 26
     }
 
     buildTypes {
@@ -16,4 +15,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+}
+
+dependencies {
+    implementation project(':smartpenbrushes')
 }
