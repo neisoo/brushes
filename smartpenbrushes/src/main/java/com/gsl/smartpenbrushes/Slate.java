@@ -110,6 +110,7 @@ public class Slate extends View {
         void strokeEnded();
     }
 
+    // 接收原始采样点，滤波，画平滑笔划。
     private class BrushesPlotter implements SpotFilter.Plotter {
         // Plotter receives pointer coordinates and draws them.
         // It implements the necessary interface to receive filtered Spots from the SpotFilter.
@@ -127,19 +128,23 @@ public class Slate extends View {
         }
 
 //        final Rect tmpDirtyRect = new Rect();
+        // mCoordBuffer产生一个滤过波的点后，回调给plot。
         @Override
         public void plot(Spot s) {
             final float pressureNorm;
         
+            // 压力
             if (ASSUME_STYLUS_CALIBRATED && s.tool == MotionEvent.TOOL_TYPE_STYLUS) {
                 pressureNorm = s.pressure;
             } else {
                 pressureNorm = mPressureCooker.getAdjustedPressure(s.pressure);
             }
 
+            // 压力转成半径
             final float radius = lerp(mRadiusMin, mRadiusMax,
                     (float) Math.pow(pressureNorm, mPressureExponent));
             
+            // 画向s位置，粗细为radius，并计算要更新的区域，并更新区域。
             final RectF dirtyF = mRenderer.strokeTo(mTiledCanvas, s.x, s.y, radius);
             dirty(dirtyF);
 //            dirtyF.roundOut(tmpDirtyRect);
@@ -185,6 +190,7 @@ public class Slate extends View {
         }
     }
     
+    // 将上一点和当前点之间画平滑的连线（笔划），转成对CanvasLite绘图操作。
     private class SmoothStroker {
         // The renderer. Given a stream of filtered points, converts it into draw calls.
         
@@ -228,6 +234,7 @@ public class Slate extends View {
             return mPenColor;
         }
         
+        // 设置笔的类型，决定了点的形状。
         public void setPenType(int type) {
             mPenType = type;
             switch (type) {
@@ -263,12 +270,14 @@ public class Slate extends View {
             mLastR = -1;
         }
 
+        // 计算两点间的距离
         final float dist (float x1, float y1, float x2, float y2) {
             x2-=x1;
             y2-=y1;
             return (float) Math.sqrt(x2*x2 + y2*y2);
         }
         
+        // 画从上一点到当前点的连线。
         private final RectF tmpRF = new RectF();
         final void drawStrokePoint(CanvasLite c, float x, float y, float r, RectF dirty) {
             switch (mShape) {
@@ -315,6 +324,7 @@ public class Slate extends View {
             } else {
                 // connect the dots, la-la-la
                 
+                // 把当前点和前一点连接起来。计算这两点之前的插值点。
                 mLastLen = dist(mLastX, mLastY, x, y);
                 float xi, yi, ri, frac;
                 float d = 0;
@@ -406,6 +416,7 @@ public class Slate extends View {
         mEmpty = true;
 
         // setup brush bitmaps
+        // 创建笔刷位图。
         final int memClass;
         final ActivityManager am = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -443,6 +454,7 @@ public class Slate extends View {
             mStrokes[i] = new BrushesPlotter();
         }
         
+        // 用于压力转半径
         mPressureCooker = new PressureCooker(getContext());
 
         setFocusable(true);
@@ -456,7 +468,8 @@ public class Slate extends View {
                 setLayerType(View.LAYER_TYPE_NONE, null);
             }
         }
-        
+
+        // 测试画图
         if (true) {
             mDebugPaints[0] = new Paint();
             mDebugPaints[0].setStyle(Paint.Style.STROKE);
@@ -732,7 +745,8 @@ public class Slate extends View {
     final static boolean hasToolType() {
         return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH);
     }
-    
+
+    // 是用笔写的还是手指写的。
     @SuppressLint("NewApi")
     final static int getToolTypeCompat(MotionEvent me, int index) {
         if (hasToolType()) {
@@ -750,6 +764,7 @@ public class Slate extends View {
         return MotionEvent.TOOL_TYPE_FINGER;
     }
 
+    // Touch事件转成点。
     @SuppressLint("NewApi")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -762,13 +777,14 @@ public class Slate extends View {
 
         // starting a new touch? commit the previous state of the canvas
         if (action == MotionEvent.ACTION_DOWN) {
+            // 一笔完成。
             commitStroke();
         }
 
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN
         		|| action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) {
             int j = event.getActionIndex();
-            
+            // 生成下笔点，加入到mStrokes中。
         	mTmpSpot.update(
         	        event.getX(j),
         			event.getY(j),
@@ -785,7 +801,7 @@ public class Slate extends View {
             if (dbgX >= 0) {
                 dbgRect.set(dbgX-1,dbgY-1,dbgX+1,dbgY+1);
             }
-
+            // 生成移笔点，加入到mStrokes中。
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < P; j++) {
                 	mTmpSpot.update(
@@ -834,7 +850,8 @@ public class Slate extends View {
                 invalidate(dirty);
             }
         }
-        
+
+        // 抬笔
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
             for (int j = 0; j < P; j++) {
                 mStrokes[event.getPointerId(j)].finish(time);
@@ -842,6 +859,18 @@ public class Slate extends View {
             dbgX = dbgY = -1;
         }
         return true;
+    }
+
+    public void addSpot(int strokeIndex, Spot spot) {
+        if (strokeIndex >=0 && strokeIndex < mStrokes.length) {
+            mStrokes[strokeIndex].add(spot);
+        }
+    }
+
+    public void finishSpot(int strokeIndex, long time) {
+        if (strokeIndex >=0 && strokeIndex < mStrokes.length) {
+            mStrokes[strokeIndex].finish(time);
+        }
     }
 
     public static float lerp(float a, float b, float f) {

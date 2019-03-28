@@ -13,6 +13,8 @@ import android.graphics.RectF;
 import android.util.FloatMath;
 import android.util.Log;
 
+// 瓦片位图画布，背景是灰白相间的格子图（瓦片）。 通过CanvasLite接口在上面画图。
+// 通过commit和step提供撤消和重做功能。
 public class TiledBitmapCanvas implements CanvasLite {
     public static final boolean DEBUG = false;
     public static final boolean DEBUG_TILES_ON_COMMIT = false;

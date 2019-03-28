@@ -20,6 +20,8 @@ import java.util.LinkedList;
 
 import android.view.MotionEvent;
 
+// 对采样到的点做滤波，也就是去掉抖动。
+// 采样到点后调用SpotFilter的add添加点，就会回调Plotter接口的plot输出一个滤波后的点。
 public class SpotFilter {
     public static boolean DEBUG = true;
     

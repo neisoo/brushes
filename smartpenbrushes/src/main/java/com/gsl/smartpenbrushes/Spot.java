@@ -19,6 +19,7 @@ package com.gsl.smartpenbrushes;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 
+// 封装点的信息，坐标、大小、压力、时间戳。
 public class Spot {
 	public float x, y;
 	public float size, pressure;
